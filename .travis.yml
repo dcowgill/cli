@@ -1,0 +1,8 @@
+language: go
+go_import_path: github.com/dcowgill/cli
+go:
+  - 1.13.x
+  - tip
+
+script:
+  - go test -v ./...
