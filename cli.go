@@ -20,6 +20,7 @@ Example progam:
 			Short: "Example Program",
 			Commands: []*cli.Command{
 				cmdHello,
+				helpTopic,
 			},
 		}
 		program.Run()
@@ -55,6 +56,11 @@ Example progam:
 		fmt.Printf(greeting+", %s!\n", args[0])
 	}
 
+	var helpTopic = &cli.Command{
+		Short: "help about a specific topic",
+		Long:  `This is the help text.`,
+	}
+
 */
 package cli
 
@@ -70,6 +76,10 @@ import (
 type Command struct {
 	// Runs the command. The args are the unparsed (non flag)
 	// arguments after the command name.
+	//
+	// If Run is nil, the Command is treated as a documentation
+	// topic, not as a runnable command. This affects how it is
+	// displayed in help and usage instructions.
 	Run func(cmd *Command, args []string)
 
 	// The one-line usage message. The first word in the line is
