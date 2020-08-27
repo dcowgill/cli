@@ -19,38 +19,34 @@ Example progam:
 			Name:  "greeter",
 			Short: "Example Program",
 			Commands: []*cli.Command{
-				cmdHello,
+				greetCommand,
 				helpTopic,
 			},
 		}
 		program.Run()
 	}
 
-	var cmdHello = &cli.Command{
-		Run:       runHello,
-		UsageLine: "hello [-bye] name",
-		Short:     "print a greeting to stdout",
-		Long: `
-	Prints a friendly greeting to the user!
-
-	The -bye flag can be used to say goodbye instead of hello.`,
+	var greetCommand = &cli.Command{
+		Run:       greetRun,
+		UsageLine: "hello [flags] NAME",
+		Init: func(fs *flag.FlagSet) {
+			fs.BoolVar(&greetFlags.bye, "bye", false, "say bye instead")
+		},
+		Short: "print a greeting",
+		Long:  "Prints a friendly greeting to standard out.",
 	}
 
-	var helloFlags struct {
+	var greetFlags struct {
 		bye bool
 	}
 
-	func init() {
-		cmdHello.Flag.BoolVar(&helloFlags.bye, "bye", false, "say goodbye")
-	}
-
-	func runHello(cmd *cli.Command, args []string) {
+	func greetRun(cmd *cli.Command, args []string) {
 		// The caller must provide a name to greet.
 		if len(args) != 1 || args[0] == "" {
 			cmd.Usage()
 		}
 		greeting := "Hello"
-		if helloFlags.bye {
+		if greetFlags.bye {
 			greeting = "Goodbye"
 		}
 		fmt.Printf(greeting+", %s!\n", args[0])
@@ -95,6 +91,10 @@ type Command struct {
 
 	// The set of flags specific to this command.
 	Flag flag.FlagSet
+
+	// The command's FlagSet may be initialized here rather than using
+	// the main module's init func. Optional.
+	Init func(fs *flag.FlagSet)
 }
 
 // Usage prints usage instructions to stderr, then exits with an error
@@ -174,6 +174,7 @@ func (mp *MainProgram) Run() {
 	// Find the command and run it.
 	for _, cmd := range mp.Commands {
 		if cmd.name() == args[0] && cmd.runnable() {
+			initCommand(cmd)
 			cmd.Flag.Usage = func() { cmd.Usage() }
 			cmd.Flag.Parse(args[1:])
 			cmd.Run(cmd, cmd.Flag.Args())
@@ -202,6 +203,7 @@ func (mp *MainProgram) help(args []string) {
 	arg := args[0]
 	for _, cmd := range mp.Commands {
 		if cmd.name() == arg {
+			initCommand(cmd)
 			cmd.printUsage(os.Stdout)
 			os.Exit(0)
 		}
@@ -262,4 +264,11 @@ Use "%[1]s help [topic]" for more information about that topic.
 
 	// Print.
 	fmt.Fprint(w, usage)
+}
+
+// Helper: call the command's Init function, if it exists.
+func initCommand(cmd *Command) {
+	if cmd.Init != nil {
+		cmd.Init(&cmd.Flag)
+	}
 }
