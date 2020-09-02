@@ -125,13 +125,13 @@ func (c *Command) hasFlags() bool {
 // Prints detailed usage instructions to the writer.
 func (c *Command) printUsage(w io.Writer) {
 	if c.runnable() {
-		fmt.Fprintf(w, "usage: %s\n\n", c.UsageLine)
+		fmt.Fprintf(w, "usage: %s\n", c.UsageLine)
 		if c.hasFlags() {
+			fmt.Fprint(w, "\n")
 			c.Flag.PrintDefaults()
 			fmt.Fprint(w, "\n")
 		}
 	}
-	fmt.Fprintf(w, "%s\n", strings.TrimSpace(c.Long))
 }
 
 // Reports whether the command can be run; otherwise it is a
